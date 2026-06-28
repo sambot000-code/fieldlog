@@ -248,6 +248,14 @@ struct CaptureView: View {
 
     private func saveEvent() {
         let snap = location.snapshot()
+        let isOnline = SyncQueue.shared.isOnline && AppSettings.shared.isConfigured
+
+        // Determine sync status — if offline or no API key, queue for later
+        let needsTranscription = audioFilename != nil && rawNote.isEmpty
+        let needsSummary = !rawNote.isEmpty && aiSummary == nil
+        let syncStatus: SyncStatus = (isOnline || (!needsTranscription && !needsSummary))
+            ? .synced : .pendingSync
+
         let event = FieldEvent(
             projectId: projectStore.activeProject?.id,
             latitude: snap?.lat,
@@ -260,9 +268,20 @@ struct CaptureView: View {
             rawNote: rawNote,
             aiSummary: aiSummary,
             photoFilenames: photoFilename.map { [$0] } ?? [],
-            audioFilename: audioFilename
+            audioFilename: audioFilename,
+            syncStatus: syncStatus
         )
         store.add(event)
+
+        // Queue AI jobs if offline
+        if !isOnline || !AppSettings.shared.isConfigured {
+            if needsTranscription {
+                SyncQueue.shared.enqueue(eventId: event.id, kind: .transcribeAudio)
+            } else if needsSummary {
+                SyncQueue.shared.enqueue(eventId: event.id, kind: .generateSummary)
+            }
+        }
+
         dismiss()
     }
 }

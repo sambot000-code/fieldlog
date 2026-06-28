@@ -15,6 +15,9 @@ struct EventDetailView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             PillBadge(label: event.status.rawValue, color: event.status.color)
+                            if event.syncStatus == .pendingSync {
+                                PillBadge(label: "⏳ Pending sync", color: .flWarning)
+                            }
                             Spacer()
                             Text(event.timestamp.formatted(date: .abbreviated, time: .shortened))
                                 .font(.caption)

@@ -85,9 +85,14 @@ struct EventCard: View {
                         .foregroundStyle(.tertiary)
                 }
                 Spacer()
-                Image(systemName: event.status.icon)
-                    .font(.title3)
-                    .foregroundStyle(event.status.color)
+                VStack(alignment: .trailing, spacing: 4) {
+                    Image(systemName: event.status.icon)
+                        .font(.title3)
+                        .foregroundStyle(event.status.color)
+                    if event.syncStatus == .pendingSync {
+                        PillBadge(label: "⏳ Pending", color: .flWarning)
+                    }
+                }
             }
 
             // Summary or raw note

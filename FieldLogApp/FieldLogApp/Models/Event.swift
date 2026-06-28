@@ -24,6 +24,7 @@ public struct FieldEvent: Identifiable, Codable {
     public var audioFilename: String?
 
     public var status: EventStatus
+    public var syncStatus: SyncStatus
     public var tags: [String]
 
     public init(
@@ -42,6 +43,7 @@ public struct FieldEvent: Identifiable, Codable {
         photoFilenames: [String] = [],
         audioFilename: String? = nil,
         status: EventStatus = .draft,
+        syncStatus: SyncStatus = .synced,
         tags: [String] = []
     ) {
         self.id = id
@@ -59,6 +61,7 @@ public struct FieldEvent: Identifiable, Codable {
         self.photoFilenames = photoFilenames
         self.audioFilename = audioFilename
         self.status = status
+        self.syncStatus = syncStatus
         self.tags = tags
     }
 
@@ -70,6 +73,11 @@ public struct FieldEvent: Identifiable, Codable {
         let index = Int((h + 11.25) / 22.5) % 16
         return dirs[index]
     }
+}
+
+public enum SyncStatus: String, Codable {
+    case synced          // All AI enrichment done
+    case pendingSync     // Queued, waiting for connectivity
 }
 
 public enum EventStatus: String, Codable, CaseIterable {

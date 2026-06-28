@@ -4,6 +4,7 @@ import PhotosUI
 /// Main capture screen — photo + text/voice → AI summary → save event
 struct CaptureView: View {
     @EnvironmentObject var store: EventStore
+    @EnvironmentObject var projectStore: ProjectStore
     @Environment(\.dismiss) var dismiss
     @StateObject private var location = LocationService.shared
 
@@ -23,6 +24,21 @@ struct CaptureView: View {
 
                 ScrollView {
                     VStack(spacing: 20) {
+
+                        // MARK: - Active Site
+                        if let active = projectStore.activeProject {
+                            ActiveSiteBanner(project: active)
+                        } else {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(Color.flWarning)
+                                Text("No active site — go to Sites tab to set one")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(12)
+                            .cardStyle()
+                        }
 
                         // MARK: - Title
                         VStack(alignment: .leading, spacing: 8) {
@@ -205,6 +221,7 @@ struct CaptureView: View {
     private func saveEvent() {
         let snap = location.snapshot()
         let event = FieldEvent(
+            projectId: projectStore.activeProject?.id,
             latitude: snap?.lat,
             longitude: snap?.lon,
             altitude: snap?.alt,

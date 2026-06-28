@@ -2,6 +2,7 @@ import SwiftUI
 
 struct EventListView: View {
     @EnvironmentObject var store: EventStore
+    @EnvironmentObject var projectStore: ProjectStore
     @State private var showCapture = false
 
     var body: some View {
@@ -10,6 +11,12 @@ struct EventListView: View {
                 Color.flBackground.ignoresSafeArea()
 
                 ScrollView {
+                    // Active site banner
+                    if let active = projectStore.activeProject {
+                        ActiveSiteBanner(project: active)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 8)
+                    }
                     if store.events.isEmpty {
                         EmptyStateView()
                             .padding(.top, 80)
@@ -53,6 +60,7 @@ struct EventListView: View {
             .sheet(isPresented: $showCapture) {
                 CaptureView()
                     .environmentObject(store)
+                    .environmentObject(projectStore)
             }
         }
     }
@@ -118,6 +126,32 @@ struct EventCard: View {
             }
         }
         .padding(16)
+        .cardStyle()
+    }
+}
+
+// MARK: - Active Site Banner
+
+struct ActiveSiteBanner: View {
+    let project: Project
+    var body: some View {
+        HStack(spacing: 10) {
+            Circle()
+                .fill(Color(hex: project.color) ?? Color.flAccent)
+                .frame(width: 10, height: 10)
+            Text("Active Site")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(project.name)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.primary)
+            if let code = project.siteCode {
+                PillBadge(label: code, color: Color(hex: project.color) ?? .flAccent)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
         .cardStyle()
     }
 }

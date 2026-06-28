@@ -5,13 +5,16 @@ public struct FieldEvent: Identifiable, Codable {
     public let id: UUID
     public var timestamp: Date
 
+    // Project linkage
+    public var projectId: UUID?
+
     // Location
     public var latitude: Double?
     public var longitude: Double?
-    public var altitude: Double?         // metres above sea level
-    public var horizontalAccuracy: Double? // metres
-    public var headingDegrees: Double?   // compass heading camera was pointing (0–360, 0 = North)
-    public var headingAccuracy: Double?  // ± degrees
+    public var altitude: Double?
+    public var horizontalAccuracy: Double?
+    public var headingDegrees: Double?
+    public var headingAccuracy: Double?
 
     public var title: String
     public var rawNote: String
@@ -26,6 +29,7 @@ public struct FieldEvent: Identifiable, Codable {
     public init(
         id: UUID = UUID(),
         timestamp: Date = Date(),
+        projectId: UUID? = nil,
         latitude: Double? = nil,
         longitude: Double? = nil,
         altitude: Double? = nil,
@@ -42,6 +46,7 @@ public struct FieldEvent: Identifiable, Codable {
     ) {
         self.id = id
         self.timestamp = timestamp
+        self.projectId = projectId
         self.latitude = latitude
         self.longitude = longitude
         self.altitude = altitude

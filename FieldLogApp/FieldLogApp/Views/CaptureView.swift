@@ -273,6 +273,9 @@ struct CaptureView: View {
         )
         store.add(event)
 
+        // Auto-link to active inspection if one is running
+        InspectionSession.shared.linkEvent(id: event.id)
+
         // Queue AI jobs if offline
         if !isOnline || !AppSettings.shared.isConfigured {
             if needsTranscription {

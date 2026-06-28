@@ -12,5 +12,9 @@
     <string>FieldLog needs photo library access to attach images to field events.</string>
     <key>NSMicrophoneUsageDescription</key>
     <string>FieldLog needs microphone access to record voice notes for field events.</string>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>location</string>
+    </array>
 </dict>
 </plist>

@@ -5,18 +5,9 @@ import Combine
 struct FieldLogApp: App {
     @StateObject private var store = EventStore()
     @StateObject private var projectStore = ProjectStore()
+    @StateObject private var inspectionStore = InspectionStore()
     @StateObject private var syncQueue = SyncQueue.shared
-    private var cancellables = Set<AnyCancellable>()
-
-    init() {
-        // When connectivity is restored, auto-process pending AI jobs
-        SyncQueue.shared.$isOnline
-            .filter { $0 }
-            .sink { _ in
-                SyncQueue.shared.processIfOnline(eventStore: EventStore())
-            }
-            .store(in: &cancellables) // Note: store reference needed; see ViewModel pattern for prod
-    }
+    @StateObject private var session = InspectionSession.shared
 
     var body: some Scene {
         WindowGroup {
@@ -26,6 +17,12 @@ struct FieldLogApp: App {
                         Label("Events", systemImage: "list.clipboard.fill")
                     }
                     .badge(syncQueue.pendingJobs.isEmpty ? 0 : syncQueue.pendingJobs.count)
+
+                InspectionListView()
+                    .tabItem {
+                        Label("Inspections", systemImage: "figure.walk")
+                    }
+                    .badge(session.isRecording ? "●" : nil)
 
                 ProjectListView()
                     .tabItem {
@@ -42,9 +39,10 @@ struct FieldLogApp: App {
             .tint(Color.flAccent)
             .environmentObject(store)
             .environmentObject(projectStore)
+            .environmentObject(inspectionStore)
             .environmentObject(syncQueue)
+            .environmentObject(session)
             .onAppear {
-                // Process any queued jobs on launch if online
                 syncQueue.processIfOnline(eventStore: store)
             }
         }

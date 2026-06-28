@@ -132,7 +132,16 @@ struct CaptureView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             SectionHeader(title: "AI Summary")
                             VStack(alignment: .leading, spacing: 12) {
-                                if isSummarizing {
+                                if !AppSettings.shared.isConfigured {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .foregroundStyle(Color.flWarning)
+                                        Text("Add an API key in Settings to enable AI summaries")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .padding(12)
+                                } else if isSummarizing {
                                     HStack(spacing: 10) {
                                         ProgressView()
                                         Text("Summarizing with AI...")

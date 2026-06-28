@@ -16,6 +16,12 @@ struct FieldLogApp: App {
                     .tabItem {
                         Label("Sites", systemImage: "building.2.fill")
                     }
+                NavigationStack {
+                    SettingsView()
+                }
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape.fill")
+                }
             }
             .tint(Color.flAccent)
             .environmentObject(store)

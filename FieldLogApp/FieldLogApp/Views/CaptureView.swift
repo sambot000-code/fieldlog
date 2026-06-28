@@ -14,6 +14,7 @@ struct CaptureView: View {
     @State private var selectedPhoto: PhotosPickerItem? = nil
     @State private var photoImage: Image? = nil
     @State private var photoFilename: String? = nil
+    @State private var audioFilename: String? = nil
     @State private var isSummarizing = false
     @State private var errorMessage: String? = nil
 
@@ -101,9 +102,27 @@ struct CaptureView: View {
                         // MARK: - Observation Note
                         VStack(alignment: .leading, spacing: 8) {
                             SectionHeader(title: "Observation Note")
+
+                            // Voice note
+                            VoiceNoteButton(
+                                onTranscript: { text in
+                                    // Append transcript to note
+                                    if rawNote.isEmpty {
+                                        rawNote = text
+                                    } else {
+                                        rawNote += " " + text
+                                    }
+                                },
+                                onAudioSaved: { filename in
+                                    audioFilename = filename
+                                }
+                            )
+                            .cardStyle()
+
+                            // Manual text fallback
                             TextEditor(text: $rawNote)
                                 .font(.system(size: 16))
-                                .frame(minHeight: 120)
+                                .frame(minHeight: 100)
                                 .padding(12)
                                 .cardStyle()
                                 .scrollContentBackground(.hidden)
@@ -231,7 +250,8 @@ struct CaptureView: View {
             title: title.isEmpty ? "Untitled Event" : title,
             rawNote: rawNote,
             aiSummary: aiSummary,
-            photoFilenames: photoFilename.map { [$0] } ?? []
+            photoFilenames: photoFilename.map { [$0] } ?? [],
+            audioFilename: audioFilename
         )
         store.add(event)
         dismiss()

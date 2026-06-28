@@ -63,6 +63,22 @@ class SyncQueue: ObservableObject {
         pendingJobs.contains(where: { $0.eventId == eventId })
     }
 
+    /// Re-queue a failed event for another attempt
+    func retry(event: FieldEvent, eventStore: EventStore) {
+        var updated = event
+        updated.syncStatus = .pendingSync
+        updated.syncError = nil
+        eventStore.update(updated)
+
+        if event.audioFilename != nil && event.rawNote.isEmpty {
+            enqueue(eventId: event.id, kind: .transcribeAudio)
+        } else if !event.rawNote.isEmpty && event.aiSummary == nil {
+            enqueue(eventId: event.id, kind: .generateSummary)
+        }
+
+        processIfOnline(eventStore: eventStore)
+    }
+
     // MARK: - Processing
 
     func processIfOnline(eventStore: EventStore) {
@@ -117,8 +133,14 @@ class SyncQueue: ObservableObject {
                 print("SyncQueue: job failed (attempt \(job.attempts)) — \(error)")
                 if job.attempts < 3 {
                     remaining.append(job)  // retry later
+                } else {
+                    // Max retries exceeded — mark event as failed visibly
+                    var failedEvent = eventStore.events[eventIndex]
+                    failedEvent.syncStatus = .failed
+                    failedEvent.syncError = error.localizedDescription
+                    eventStore.update(failedEvent)
+                    print("SyncQueue: permanently failed event \(failedEvent.id) — \(error)")
                 }
-                // After 3 attempts, drop the job
             }
         }
 

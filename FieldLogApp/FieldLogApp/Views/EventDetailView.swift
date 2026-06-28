@@ -26,6 +26,36 @@ struct EventDetailView: View {
                         Text(event.title.isEmpty ? "Untitled Event" : event.title)
                             .font(.system(size: 22, weight: .bold))
                             .foregroundStyle(.primary)
+
+                        // Sync failure notice + retry
+                        if event.syncStatus == .failed {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundStyle(Color.flDanger)
+                                    Text("AI enrichment failed after 3 attempts")
+                                        .font(.subheadline.weight(.medium))
+                                        .foregroundStyle(Color.flDanger)
+                                }
+                                if let errMsg = event.syncError {
+                                    Text(errMsg)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Button {
+                                    SyncQueue.shared.retry(event: event, eventStore: store)
+                                } label: {
+                                    Label("Retry Now", systemImage: "arrow.clockwise")
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(Color.flAccent)
+                                        .clipShape(Capsule())
+                                }
+                            }
+                            .padding(.top, 4)
+                        }
                     }
                     .padding(16)
                     .cardStyle()

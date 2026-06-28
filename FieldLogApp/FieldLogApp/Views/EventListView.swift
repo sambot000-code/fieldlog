@@ -23,7 +23,7 @@ struct EventListView: View {
                     } else {
                         LazyVStack(spacing: 12) {
                             ForEach(store.events) { event in
-                                NavigationLink(destination: EventDetailView(event: event)) {
+                                NavigationLink(destination: EventDetailView(event: event).environmentObject(store)) {
                                     EventCard(event: event)
                                 }
                                 .buttonStyle(.plain)
@@ -91,6 +91,8 @@ struct EventCard: View {
                         .foregroundStyle(event.status.color)
                     if event.syncStatus == .pendingSync {
                         PillBadge(label: "⏳ Pending", color: .flWarning)
+                    } else if event.syncStatus == .failed {
+                        PillBadge(label: "⚠️ Failed", color: .flDanger)
                     }
                 }
             }

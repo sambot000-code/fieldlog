@@ -25,6 +25,7 @@ public struct FieldEvent: Identifiable, Codable {
 
     public var status: EventStatus
     public var syncStatus: SyncStatus
+    public var syncError: String?    // Last error message if syncStatus == .failed
     public var tags: [String]
 
     public init(
@@ -44,6 +45,7 @@ public struct FieldEvent: Identifiable, Codable {
         audioFilename: String? = nil,
         status: EventStatus = .draft,
         syncStatus: SyncStatus = .synced,
+        syncError: String? = nil,
         tags: [String] = []
     ) {
         self.id = id
@@ -62,6 +64,7 @@ public struct FieldEvent: Identifiable, Codable {
         self.audioFilename = audioFilename
         self.status = status
         self.syncStatus = syncStatus
+        self.syncError = syncError
         self.tags = tags
     }
 
@@ -78,6 +81,7 @@ public struct FieldEvent: Identifiable, Codable {
 public enum SyncStatus: String, Codable {
     case synced          // All AI enrichment done
     case pendingSync     // Queued, waiting for connectivity
+    case failed          // Gave up after max retries
 }
 
 public enum EventStatus: String, Codable, CaseIterable {

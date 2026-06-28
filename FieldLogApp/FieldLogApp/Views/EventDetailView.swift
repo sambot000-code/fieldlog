@@ -1,54 +1,140 @@
 import SwiftUI
+import MapKit
 
 struct EventDetailView: View {
     let event: FieldEvent
 
     var body: some View {
-        List {
-            // MARK: Summary
-            if let summary = event.aiSummary {
-                Section("AI Summary") {
-                    Text(summary)
-                }
-            }
+        ZStack {
+            Color.flBackground.ignoresSafeArea()
 
-            // MARK: Raw Note
-            if !event.rawNote.isEmpty {
-                Section("Raw Note") {
-                    Text(event.rawNote)
-                        .foregroundStyle(.secondary)
-                }
-            }
+            ScrollView {
+                VStack(spacing: 20) {
 
-            // MARK: Photos
-            if !event.photoFilenames.isEmpty {
-                Section("Photos") {
-                    ForEach(event.photoFilenames, id: \.self) { filename in
-                        if let image = loadImage(filename: filename) {
-                            image
-                                .resizable()
-                                .scaledToFit()
-                                .cornerRadius(8)
+                    // MARK: - Header card
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            PillBadge(label: event.status.rawValue, color: event.status.color)
+                            Spacer()
+                            Text(event.timestamp.formatted(date: .abbreviated, time: .shortened))
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
+                        Text(event.title.isEmpty ? "Untitled Event" : event.title)
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundStyle(.primary)
+                    }
+                    .padding(16)
+                    .cardStyle()
+
+                    // MARK: - Photo
+                    if let filename = event.photoFilenames.first,
+                       let image = loadImage(filename: filename) {
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 260)
+                            .clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    }
+
+                    // MARK: - AI Summary
+                    if let summary = event.aiSummary {
+                        VStack(alignment: .leading, spacing: 8) {
+                            SectionHeader(title: "AI Summary")
+                            HStack(alignment: .top, spacing: 10) {
+                                Image(systemName: "sparkles")
+                                    .foregroundStyle(Color.flAccent)
+                                    .padding(.top, 2)
+                                Text(summary)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.primary)
+                            }
+                            .padding(14)
+                            .cardStyle()
+                        }
+                    }
+
+                    // MARK: - Raw Note
+                    if !event.rawNote.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            SectionHeader(title: "Field Note")
+                            Text(event.rawNote)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .padding(14)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .cardStyle()
+                        }
+                    }
+
+                    // MARK: - Location
+                    if let lat = event.latitude, let lon = event.longitude {
+                        VStack(alignment: .leading, spacing: 8) {
+                            SectionHeader(title: "Location")
+                            VStack(alignment: .leading, spacing: 12) {
+                                // Map preview
+                                Map(position: .constant(.region(MKCoordinateRegion(
+                                    center: CLLocationCoordinate2D(latitude: lat, longitude: lon),
+                                    span: MKCoordinateSpan(latitudeDelta: 0.002, longitudeDelta: 0.002)
+                                )))) {
+                                    Marker("Event", coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon))
+                                        .tint(Color.flAccent)
+                                }
+                                .frame(height: 180)
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .padding(.horizontal, 14)
+                                .padding(.top, 14)
+
+                                Divider().padding(.horizontal, 14)
+
+                                // Coordinate details
+                                VStack(spacing: 6) {
+                                    CoordRow(label: "Latitude",  value: String(format: "%.6f°", lat))
+                                    CoordRow(label: "Longitude", value: String(format: "%.6f°", lon))
+                                    if let alt = event.altitude {
+                                        CoordRow(label: "Altitude",  value: String(format: "%.0f m", alt))
+                                    }
+                                    if let acc = event.horizontalAccuracy {
+                                        CoordRow(label: "Accuracy",  value: String(format: "±%.0f m", acc))
+                                    }
+                                    if let deg = event.headingDegrees {
+                                        CoordRow(
+                                            label: "Heading",
+                                            value: "\(Int(deg))° \(event.headingLabel ?? "")"
+                                        )
+                                    }
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.bottom, 14)
+                            }
+                            .cardStyle()
+                        }
+                    }
+
+                    // MARK: - Tags
+                    if !event.tags.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            SectionHeader(title: "Tags")
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(event.tags, id: \.self) { tag in
+                                        PillBadge(label: tag, color: .flAccent)
+                                    }
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                            }
+                            .cardStyle()
                         }
                     }
                 }
-            }
-
-            // MARK: Metadata
-            Section("Details") {
-                LabeledContent("Status", value: event.status.rawValue)
-                LabeledContent("Logged", value: event.timestamp.formatted(
-                    date: .long, time: .shortened
-                ))
-                if let lat = event.latitude, let lon = event.longitude {
-                    LabeledContent("Location", value: "\(lat), \(lon)")
-                }
-                if !event.tags.isEmpty {
-                    LabeledContent("Tags", value: event.tags.joined(separator: ", "))
-                }
+                .padding(16)
+                .padding(.bottom, 30)
             }
         }
-        .navigationTitle(event.title.isEmpty ? "Event" : event.title)
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -58,5 +144,23 @@ struct EventDetailView: View {
         guard let data = try? Data(contentsOf: url),
               let uiImage = UIImage(data: data) else { return nil }
         return Image(uiImage: uiImage)
+    }
+}
+
+// MARK: - Coord Row
+
+struct CoordRow: View {
+    let label: String
+    let value: String
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .font(.system(.subheadline, design: .monospaced))
+                .foregroundStyle(.primary)
+        }
     }
 }

@@ -2,82 +2,141 @@ import SwiftUI
 
 struct EventListView: View {
     @EnvironmentObject var store: EventStore
+    @State private var showCapture = false
 
     var body: some View {
         NavigationStack {
-            Group {
-                if store.events.isEmpty {
-                    ContentUnavailableView(
-                        "No Events Yet",
-                        systemImage: "list.clipboard",
-                        description: Text("Tap + to log your first field observation.")
-                    )
-                } else {
-                    List {
-                        ForEach(store.events) { event in
-                            NavigationLink(destination: EventDetailView(event: event)) {
-                                EventRowView(event: event)
+            ZStack(alignment: .bottomTrailing) {
+                Color.flBackground.ignoresSafeArea()
+
+                ScrollView {
+                    if store.events.isEmpty {
+                        EmptyStateView()
+                            .padding(.top, 80)
+                    } else {
+                        LazyVStack(spacing: 12) {
+                            ForEach(store.events) { event in
+                                NavigationLink(destination: EventDetailView(event: event)) {
+                                    EventCard(event: event)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
-                        .onDelete(perform: store.delete)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .padding(.bottom, 100)
                     }
                 }
+
+                // FAB
+                Button {
+                    showCapture = true
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 18, weight: .semibold))
+                        Text("Log Event")
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 14)
+                    .background(Color.flAccent)
+                    .clipShape(Capsule())
+                    .shadow(color: Color.flAccent.opacity(0.45), radius: 12, x: 0, y: 6)
+                }
+                .padding(.trailing, 20)
+                .padding(.bottom, 32)
             }
-            .navigationTitle("FieldLog 📋")
-            .toolbar {
-                ToolbarItem(placement: .primaryAction) {
-                    NavigationLink(destination: CaptureView()) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                    }
-                }
+            .navigationTitle("FieldLog")
+            .navigationBarTitleDisplayMode(.large)
+            .sheet(isPresented: $showCapture) {
+                CaptureView()
+                    .environmentObject(store)
             }
         }
     }
 }
 
-struct EventRowView: View {
+// MARK: - Event Card
+
+struct EventCard: View {
     let event: FieldEvent
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(event.title.isEmpty ? "Untitled Event" : event.title)
-                    .font(.headline)
+        VStack(alignment: .leading, spacing: 10) {
+            // Top row
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(event.title.isEmpty ? "Untitled Event" : event.title)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.primary)
+
+                    Text(event.timestamp.formatted(date: .abbreviated, time: .shortened))
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
                 Spacer()
-                StatusBadge(status: event.status)
+                Image(systemName: event.status.icon)
+                    .font(.title3)
+                    .foregroundStyle(event.status.color)
             }
-            Text(event.aiSummary ?? event.rawNote)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-            Text(event.timestamp.formatted(date: .abbreviated, time: .shortened))
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+
+            // Summary or raw note
+            if let summary = event.aiSummary ?? (event.rawNote.isEmpty ? nil : event.rawNote) {
+                Text(summary)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+                    .multilineTextAlignment(.leading)
+            }
+
+            // Location pill
+            if let lat = event.latitude, let lon = event.longitude {
+                HStack(spacing: 4) {
+                    Image(systemName: "location.fill")
+                        .font(.caption2)
+                    Text(String(format: "%.5f, %.5f", lat, lon))
+                        .font(.caption2.monospacedDigit())
+                    if let heading = event.headingLabel {
+                        Text("· \(heading)")
+                            .font(.caption2)
+                    }
+                }
+                .foregroundStyle(Color.flAccent)
+            }
+
+            // Tags
+            if !event.tags.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(event.tags, id: \.self) { tag in
+                            PillBadge(label: tag, color: .flAccent)
+                        }
+                    }
+                }
+            }
         }
-        .padding(.vertical, 4)
+        .padding(16)
+        .cardStyle()
     }
 }
 
-struct StatusBadge: View {
-    let status: EventStatus
+// MARK: - Empty State
 
-    var color: Color {
-        switch status {
-        case .draft: return .orange
-        case .submitted: return .blue
-        case .reviewed: return .green
-        }
-    }
-
+struct EmptyStateView: View {
     var body: some View {
-        Text(status.rawValue)
-            .font(.caption2)
-            .fontWeight(.semibold)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(color.opacity(0.15))
-            .foregroundStyle(color)
-            .clipShape(Capsule())
+        VStack(spacing: 16) {
+            Image(systemName: "scope")
+                .font(.system(size: 56))
+                .foregroundStyle(Color.flAccent.opacity(0.7))
+            Text("No Events Logged")
+                .font(.title3.weight(.semibold))
+            Text("Tap Log Event to capture your first field observation.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 40)
+        }
     }
 }

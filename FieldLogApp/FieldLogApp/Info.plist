@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>FieldLog needs your location to geotag field events with precise GPS coordinates.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>FieldLog needs your location to geotag field events with precise GPS coordinates.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>FieldLog needs camera access to attach photos to field events.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>FieldLog needs photo library access to attach images to field events.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>FieldLog needs microphone access to record voice notes for field events.</string>
+</dict>
+</plist>
